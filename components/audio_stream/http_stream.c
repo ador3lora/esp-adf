@@ -22,6 +22,11 @@
  *
  */
 
+#include <sdkconfig.h>
+#if defined(CONFIG_DEBUG_VERSION)
+#define LOG_LOCAL_LEVEL ESP_LOG_DEBUG
+#endif /* CONFIG_DEBUG_VERSION */
+
 #include <sys/unistd.h>
 #include <sys/stat.h>
 #include <string.h>
@@ -55,6 +60,8 @@
 #else
 #include "hwcrypto/aes.h"
 #endif
+
+#define DECIMAL_DIGITS_BOUND (241 * sizeof(int) / 100 + 1)
 
 static const char *TAG = "HTTP_STREAM";
 #define MAX_PLAYLIST_LINE_SIZE (512)
@@ -97,6 +104,11 @@ typedef struct http_stream {
     gzip_miniz_handle_t             gzip;             /* GZIP instance */
     http_stream_hls_key_t           *hls_key;
     hls_handle_t                    *hls_media;
+
+    struct {
+        bool is_content_range;
+        bool is_range_recvd;
+    } range_request;
 } http_stream_t;
 
 static esp_err_t http_stream_auto_connect_next_track(audio_element_handle_t el);
@@ -148,6 +160,32 @@ static int _gzip_read_data(uint8_t *data, int size, void *ctx)
     return esp_http_client_read(http->client, (char *)data, size);
 }
 
+// Continue receiving data in case of using HTTP range request
+// ESP_OK on success or ESP_ERR_NOT_FOUND if all request data has been read
+static esp_err_t http_stream_handle_range_request(audio_element_handle_t el) {
+    http_stream_t *http = (http_stream_t *)audio_element_getdata(el);
+    if (!http->range_request.is_range_recvd) {
+        /* All range data has been received, try to receive next range data */
+        audio_element_info_t info;
+        memset(&info, 0, sizeof(audio_element_info_t));
+
+        audio_element_getinfo(el, &info);
+        audio_element_reset_state(el);
+        audio_element_set_byte_pos(el, info.byte_pos);
+        audio_element_set_total_bytes(el, info.total_bytes);
+        http->is_open = false;
+        http->range_request.is_range_recvd = true;
+    } else {
+        /* The flag that the previous range was read was set,
+         * but the server returned 0 when trying to get more data */
+        /* This situation is handled as the end of downloading the current track */
+        http->range_request.is_content_range = false;
+        http->range_request.is_range_recvd = false;
+        return ESP_ERR_NOT_FOUND;
+    }
+    return ESP_OK;
+}
+
 static esp_err_t _http_event_handle(esp_http_client_event_t *evt)
 {
     audio_element_handle_t el = (audio_element_handle_t)evt->user_data;
@@ -173,6 +211,30 @@ static esp_err_t _http_event_handle(esp_http_client_event_t *evt)
             ESP_LOGE(TAG, "Content-Encoding %s not supported", evt->header_value);
             return ESP_FAIL;
         }
+    }
+    else if (strcasecmp(evt->header_key, "Content-Range") == 0) {
+        char *bytes = (char *)calloc(DECIMAL_DIGITS_BOUND + 1, sizeof(char));
+        if (NULL == bytes) {
+            return ESP_OK;
+        }
+
+        char *pos_beg = strchr(evt->header_value, '/');
+        if (NULL == pos_beg) {
+            goto http_event_on_header_leave;
+        }
+
+        ++pos_beg;
+
+        strlcpy(bytes, pos_beg, DECIMAL_DIGITS_BOUND + 1);
+        audio_element_set_total_bytes(el, (int)atoi(bytes));
+
+        http_stream_t *http_stream = (http_stream_t *)audio_element_getdata(el);
+        http_stream->range_request.is_content_range = true;
+
+        ESP_LOGI(TAG, "%s(): \"%s: %s\"", __PRETTY_FUNCTION__, evt->header_key, evt->header_value);
+
+        http_event_on_header_leave:
+            free(bytes);
     }
     return ESP_OK;
 }
@@ -396,7 +458,7 @@ static esp_err_t _resolve_playlist(audio_element_handle_t self, const char *uri)
                 if (http->hls_key->key_url == NULL) {
                     ESP_LOGE(TAG, "No memory for hls key url");
                     return ESP_FAIL;
-                } 
+                }
             }
             http->hls_key->sequence_no = hls_playlist_get_sequence_no(hls);
         }
@@ -474,13 +536,11 @@ _stream_open_begin:
         esp_http_client_set_url(http->client, uri);
     }
 
-    if (info.byte_pos) {
-        char rang_header[32];
-        snprintf(rang_header, 32, "bytes=%d-", (int)info.byte_pos);
-        esp_http_client_set_header(http->client, "Range", rang_header);
-    } else {
-        esp_http_client_delete_header(http->client, "Range");
-    }
+    http->range_request.is_content_range = false;
+
+    char rang_header[32];
+    snprintf(rang_header, 32, "bytes=%d-", (int)info.byte_pos);
+    esp_http_client_set_header(http->client, "Range", rang_header);
 
     if (dispatch_hook(self, HTTP_STREAM_PRE_REQUEST, NULL, 0) != ESP_OK) {
         ESP_LOGE(TAG, "Failed to process user callback");
@@ -526,16 +586,18 @@ _stream_redirect:
         esp_http_client_close(http->client);
         return ESP_FAIL;
     }
-    /*
-    * Due to the total byte of content has been changed after seek, set info.total_bytes at beginning only.
-    */
+
     int64_t cur_pos = esp_http_client_fetch_headers(http->client);
     audio_element_getinfo(self, &info);
-    if (info.byte_pos <= 0) {
-        info.total_bytes = cur_pos;
+
+    if (false == http->range_request.is_content_range) {
+        /* Due to the total byte of content has been changed after seek, set info.total_bytes at beginning only */
+        if (info.byte_pos <= 0) {
+            info.total_bytes = cur_pos;
+        }
+        ESP_LOGI(TAG, "total_bytes=%d", (int)info.total_bytes);
     }
 
-    ESP_LOGI(TAG, "total_bytes=%d", (int)info.total_bytes);
     int status_code = esp_http_client_get_status_code(http->client);
     if (status_code == 301 || status_code == 302) {
         esp_http_client_set_redirection(http->client);
@@ -550,12 +612,17 @@ _stream_redirect:
         }
         return ESP_FAIL;
     }
-    /**
-     * `audio_element_setinfo` is risky affair.
-     * It overwrites URI pointer as well. Pay attention to that!
-     */
-    audio_element_set_total_bytes(self, info.total_bytes);
-    
+
+    if (false == http->range_request.is_content_range) {
+        /**
+         * `audio_element_setinfo` is risky affair.
+         * It overwrites URI pointer as well. Pay attention to that!
+         */
+        audio_element_set_total_bytes(self, info.total_bytes);
+    } else {
+        ESP_LOGI(TAG, "%s(): \"Content-Length: %d\"", __PRETTY_FUNCTION__, (int)info.total_bytes);
+    }
+
     if (_is_playlist(&info, uri) == true) {
         /**
          * `goto _stream_open_begin` blocks on http_open until it gets valid URL.
@@ -667,22 +734,26 @@ static int _http_read(audio_element_handle_t self, char *buffer, int len, TickTy
             ESP_LOGW(TAG, "Got %d errno(%s)", http->_errno, strerror(http->_errno));
             return http->_errno;
         }
-        if (http->auto_connect_next_track) {
-            if (dispatch_hook(self, HTTP_STREAM_FINISH_PLAYLIST, NULL, 0) != ESP_OK) {
-                ESP_LOGE(TAG, "Failed to process user callback");
-                return ESP_FAIL;
-            }
-        } else {
-            if (dispatch_hook(self, HTTP_STREAM_FINISH_TRACK, NULL, 0) != ESP_OK) {
-                ESP_LOGE(TAG, "Failed to process user callback");
-                return ESP_FAIL;
+        /* All track data has been downloaded from the server */
+        if (!http->range_request.is_content_range ||
+            (http->range_request.is_content_range && (http_stream_handle_range_request(self) != ESP_OK))) {
+            if (http->auto_connect_next_track) {
+                if (dispatch_hook(self, HTTP_STREAM_FINISH_PLAYLIST, NULL, 0) != ESP_OK) {
+                    ESP_LOGE(TAG, "Failed to process user callback");
+                    return ESP_FAIL;
+                }
+            } else {
+                if (dispatch_hook(self, HTTP_STREAM_FINISH_TRACK, NULL, 0) != ESP_OK) {
+                    ESP_LOGE(TAG, "Failed to process user callback");
+                    return ESP_FAIL;
+                }
             }
         }
         return ESP_OK;
     } else {
         if (http->hls_key) {
-            int ret = esp_aes_crypt_cbc(&http->hls_key->aes_ctx, ESP_AES_DECRYPT, 
-                 rlen, (unsigned char*)http->hls_key->key.iv, 
+            int ret = esp_aes_crypt_cbc(&http->hls_key->aes_ctx, ESP_AES_DECRYPT,
+                 rlen, (unsigned char*)http->hls_key->key.iv,
                  (unsigned char*)buffer, (unsigned char*)buffer);
             if (rlen % 16 != 0) {
                 ESP_LOGE(TAG, "Data length %d not aligned", rlen);
@@ -709,6 +780,12 @@ static int _http_read(audio_element_handle_t self, char *buffer, int len, TickTy
                     }
                 }
             }
+        }
+        /* The flag of the end of the current data range was set and
+         * the server returned data when requesting the next data range */
+        /* Loading track data in a range request continues */
+        if (http->range_request.is_content_range && http->range_request.is_range_recvd) {
+            http->range_request.is_range_recvd = false;
         }
         audio_element_update_byte_pos(self, rlen);
     }
