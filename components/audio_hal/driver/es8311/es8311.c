@@ -201,6 +201,11 @@ static const struct _coeff_div coeff_div[] = {
     {1536000 , 96000, 0x01, 0x08, 0x01, 0x01, 0x01, 0x00, 0x7f, 0x02, 0x10, 0x10},
 };
 
+#include "sdkconfig.h"
+#if defined( CONFIG_DEBUG_VERSION )
+#define LOG_LOCAL_LEVEL ESP_LOG_DEBUG
+#endif // CONFIG_DEBUG_VERSION
+
 static char *TAG = "DRV8311";
 
 #define ES_ASSERT(a, format, b, ...) \

@@ -41,9 +41,10 @@
 #if CONFIG_ESP32_S3_KORVO2_V3_BOARD
 #define ES7210_MIC_SELECT             ES7210_INPUT_MIC1 | ES7210_INPUT_MIC2 | ES7210_INPUT_MIC3
 #else
-#define ES7210_MIC_SELECT             ES7210_INPUT_MIC1 | ES7210_INPUT_MIC2
+// #define ES7210_MIC_SELECT             ES7210_INPUT_MIC1 | ES7210_INPUT_MIC2
+#define ES7210_MIC_SELECT ES7210_INPUT_MIC1 | ES7210_INPUT_MIC2 | ES7210_INPUT_MIC3
 #endif
-#define ENABLE_TDM_MAX_NUM            3
+#define ENABLE_TDM_MAX_NUM (3)
 
 static char *TAG = "ES7210";
 
@@ -452,6 +453,9 @@ esp_err_t es7210_start(uint8_t clock_reg_value)
     ret |= es7210_write_reg(ES7210_MIC3_POWER_REG49, 0x08);
     ret |= es7210_write_reg(ES7210_MIC4_POWER_REG4A, 0x08);
     ret |= es7210_mic_select(es7210_handle.mic_select);
+    ret |= es7210_write_reg(ES7210_ANALOG_REG40, 0x43);
+    ret |= es7210_write_reg(ES7210_RESET_REG00, 0x71);
+    ret |= es7210_write_reg(ES7210_RESET_REG00, 0x41);
     return ret;
 }
 
