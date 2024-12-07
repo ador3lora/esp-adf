@@ -125,7 +125,8 @@ int8_t get_headphone_detect_gpio(void);
  * @return  -1      non-existent
  *          Others  gpio number
  */
-int8_t get_pa_enable_gpio(void);
+int8_t   get_pa_enable_gpio(void);
+uint32_t get_pa_enable_active_level(void);
 
 /**
  * @brief  Get the gpio number for adc detection

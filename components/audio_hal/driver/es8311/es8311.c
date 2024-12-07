@@ -298,21 +298,11 @@ static void es8311_suspend(void)
 */
 void es8311_pa_power(bool enable)
 {
-
-#if defined( CONFIG_RACCOON_HW_V2_0 )
     if (enable) {
-        gpio_set_level(get_pa_enable_gpio(), 0);
+        gpio_set_level(get_pa_enable_gpio(), get_pa_enable_active_level());
     } else {
-        gpio_set_level(get_pa_enable_gpio(), 1);
+        gpio_set_level(get_pa_enable_gpio(), !get_pa_enable_active_level());
     }
-#else
-    if (enable) {
-        gpio_set_level(get_pa_enable_gpio(), 1);
-    } else {
-        gpio_set_level(get_pa_enable_gpio(), 0);
-    }
-#endif // CONFIG_RACCOON_HW_V2_0
-
 }
 
 esp_err_t es8311_codec_init(audio_hal_codec_config_t *codec_cfg)
