@@ -291,9 +291,11 @@ esp_err_t es8311_pa_power(bool enable)
 {
     esp_err_t ret = ESP_OK;
     if (enable) {
-        ret = gpio_set_level(get_pa_enable_gpio(), 1);
+        ret = gpio_set_level(
+            get_pa_enable_gpio(), get_pa_enable_active_level());
     } else {
-        ret = gpio_set_level(get_pa_enable_gpio(), 0);
+        ret = gpio_set_level(
+            get_pa_enable_gpio(), !get_pa_enable_active_level());
     }
     return ret;
 }

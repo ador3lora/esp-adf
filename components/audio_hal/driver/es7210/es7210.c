@@ -39,7 +39,9 @@
 #define ES7210_MCLK_SOURCE    (FROM_CLOCK_DOUBLE_PIN)  /* In master mode. 0 : MCLK from pad; 1 : MCLK from clock doubler */
 
 #ifndef ES7210_MIC_SELECT
-#define ES7210_MIC_SELECT (ES7210_INPUT_MIC1 | ES7210_INPUT_MIC2)
+// #define ES7210_MIC_SELECT (ES7210_INPUT_MIC1 | ES7210_INPUT_MIC2)
+#define ES7210_MIC_SELECT \
+    ( ES7210_INPUT_MIC1 | ES7210_INPUT_MIC2 | ES7210_INPUT_MIC3 )
 #endif  /* ES7210_MIC_SELECT */
 
 static char *TAG = "ES7210";
@@ -454,6 +456,9 @@ esp_err_t es7210_start(uint8_t clock_reg_value)
     ret |= es7210_write_reg(ES7210_MIC3_POWER_REG49, 0x08);
     ret |= es7210_write_reg(ES7210_MIC4_POWER_REG4A, 0x08);
     ret |= es7210_mic_select(es7210_handle.mic_select);
+    ret |= es7210_write_reg(ES7210_ANALOG_REG40, 0x43);
+    ret |= es7210_write_reg(ES7210_RESET_REG00, 0x71);
+    ret |= es7210_write_reg(ES7210_RESET_REG00, 0x41);
     return ret;
 }
 
