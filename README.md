@@ -1,84 +1,59 @@
 # Espressif Advanced Development Framework
 
-[![Documentation Status](./docs/_static/doc_latest.svg)](https://docs.espressif.com/projects/esp-adf/en/latest/?badge=latest)
+[中文版](./README_CN.md)
 
-Espressif Systems Advanced Development Framework (ESP-ADF) is the official Advanced Development Framework for the [ESP32](https://espressif.com/en/products/hardware/esp32/overview), [ESP32-S2](https://www.espressif.com/en/products/socs/esp32-s2), [ESP32-C3](https://www.espressif.com/en/products/socs/esp32-c3), [ESP32-C6](https://www.espressif.com/en/products/socs/esp32-c6), [ESP32-S3](https://www.espressif.com/en/products/socs/esp32-s3), and [ESP32-P4](https://www.espressif.com/en/products/socs/esp32-p4) SoCs.
+## ⚠️ Important
+
+The `master` branch contains the new features for **ADF v3.0**, which are actively developed and **incompatible** with previous versions. For the stable ADF v2.x version, please switch to the [`release/v2.x`](https://github.com/espressif/esp-adf/tree/release/v2.x) branch.
 
 ## Overview
 
-ESP-ADF supports development of audio applications for the Espressif Systems SoCs in the most comprehensive way. With ESP-ADF, you can easily add features, develop audio and video applications from simple to complex:
+**ESP-ADF** (Espressif Advanced Development Framework) is Espressif’s official **advanced application-layer development framework**, designed to simplify the development of audio, video, and IoT products.
 
-- Music player or recorder supports audio formats such as MP3, AAC, FLAC, WAV, OGG, OPUS, AMR, TS, EQ, Downmixer, Sonic, ALC, G.711 and etc.
-- Play music from sources: HTTP, HLS (HTTP Live Streaming), SPIFFS, SDCARD, A2DP-Source, A2DP-Sink, HFP and etc.
-- Integrate media protocols, such as: DLNA, VoIP, RMTP, ESP-RTC (SIP, RTSP, and RTCP), etc.
-- Video call, video recording and video live streaming
-- Internet Radio
-- Voice recognition and integration with online services such as Alexa, DuerOS and etc.
+**ADF v3.0** represents a **major architectural upgrade**, completely redesigned and **incompatible** with ADF v2.x. It focuses on product-oriented functionality, modular services, and low resource consumption.
 
-As a general, the ESP-ADF features will be supported as shown below:
+### ESP-ADF vs ESP-IDF
 
-<div align="center"><img src="docs/_static/adf_block_diagram.png" alt ="ADF Block Diagram" align="center" /></div>
+- **ESP-IDF** is the base SDK for Espressif chips, offering low-level components such as OS, drivers, network stack, Bluetooth, etc.
+- **ESP-ADF** is built on top of ESP-IDF, providing high-level product-oriented services, such as audio/video playback, battery service, OTA, and more.
 
-## Developing with the ESP-ADF
+## ✅ ADF v3.0 Features
 
-### IDF Version
+**ADF v3.0** is a **product-oriented development framework** with **significant architectural changes** that are **completely incompatible** with previous ADF versions. Key features include:
 
-The following table shows the ESP-IDF versions supported by ESP-ADF at the current time. The label ![alt text](docs/_static/yes-checkm.png "supported") means supported, and the label ![alt text](docs/_static/no-icon.png) means not supported.
+- **ESP-GMF Integration**: Core media pipeline restructured using [**ESP-GMF**](https://github.com/espressif/esp-gmf) (General Multimedia Framework)
+- **Standalone Components**: Functional components such as `playlist` can run independently
+- **Product Services**: Modular services for **audio playback**, **video playback**, **battery monitoring**, and more
+- **MCP Support**: Product services are callable via **Model Context Protocol (MCP)**
+- **Multi-Product Support**: Designed for **audio**, **video**, and **IoT** products
+- **Resource Efficient**: Optimized for **low memory and CPU usage**
+- **Multi-Language App Support**: Supports development in **MicroPython**, **Arduino**, and **C/C++**
 
-The ESP-IDF master branch is marked as not supported because the major feature changes it has introduced may cause conflicts with ESP-ADF. Yet, the ADF examples not affected by those feature changes can still run correctly on the IDF master branch.
+## ADF v3.0 Block Diagram
 
-End of Life IDF branches are removed. See [IDF Supported Periods](https://docs.espressif.com/projects/esp-idf/en/latest/esp32/versions.html#support-periods) for details.
+<div align="center">
+  <img src="docs/_static/adf_block_diagram.png" alt="ADF Block Diagram" width="100%" />
+</div>
 
+## Platform Requirements
 
-|                      | ESP-IDF <br> [Release/v5.1](https://docs.espressif.com/projects/esp-idf/zh_CN/release-v5.1/esp32/versions.html) |  ESP-IDF <br> [Release/v5.2](https://docs.espressif.com/projects/esp-idf/zh_CN/release-v5.2/esp32/versions.html) |  ESP-IDF <br> [Release/v5.3](https://docs.espressif.com/projects/esp-idf/zh_CN/release-v5.3/esp32/versions.html) | ESP-IDF <br> [Release/v5.4](https://docs.espressif.com/projects/esp-idf/zh_CN/release-v5.4/esp32/versions.html) | ESP-IDF <br> [Release/v5.5](https://docs.espressif.com/projects/esp-idf/zh_CN/release-v5.5/esp32/versions.html) | ESP-IDF <br> [Master](https://docs.espressif.com/projects/esp-idf/zh_CN/latest/esp32/versions.html) |
-|:----------- |:---------------------: | :---------------------:| :---------------------:| :---------------------:| :---------------------:| :---------------------:|
-| ESP-ADF <br> Master | ![alt text](docs/_static/yes-checkm.png "supported") | ![alt text](docs/_static/yes-checkm.png "supported") | ![alt text](docs/_static/yes-checkm.png "supported") | ![alt text](docs/_static/yes-checkm.png "supported") | ![alt text](docs/_static/yes-checkm.png "supported") |![alt text](docs/_static/no-icon.png "not supported") |
-| ESP-ADF <br> Release/v2.7  | ![alt text](docs/_static/yes-checkm.png "supported") | ![alt text](docs/_static/yes-checkm.png "supported") | ![alt text](docs/_static/yes-checkm.png "supported") | ![alt text](docs/_static/no-icon.png "not supported") | ![alt text](docs/_static/no-icon.png "not supported") |  ![alt text](docs/_static/no-icon.png "not supported") |
-| ESP-ADF <br> Release/v2.6  | ![alt text](docs/_static/yes-checkm.png "supported") |![alt text](docs/_static/no-icon.png "not supported") | ![alt text](docs/_static/no-icon.png "not supported") | ![alt text](docs/_static/no-icon.png "not supported") | ![alt text](docs/_static/no-icon.png "not supported") | ![alt text](docs/_static/no-icon.png "not supported") |
+- **ESP-IDF Version**: v5.5.2 or later
 
+## Branch Strategy
 
+- [`release/v2.x`](https://github.com/espressif/esp-adf/tree/release/v2.x): Legacy ADF implementation (v2). Receives only bug fixes and minor enhancements.
+  See [ADF v2.x Documentation](https://docs.espressif.com/projects/esp-adf/en/latest/index.html) for reference.
 
-### Quick Start
+- `master`: Development branch for **ADF v3.0**. Not compatible with v2.x APIs or behavior.
 
-You need one of ESP-IDF versions described in [ESP-ADF Releases](https://github.com/espressif/esp-adf/releases), one of audio boards below and headphones.
+## Documentation
 
-**Note:**  If this is your first exposure to ESP-IDF, proceed to **Getting Started** documentation specific for [ESP32](https://docs.espressif.com/projects/esp-idf/en/latest/esp32/get-started/index.html), [ESP32-S2](https://docs.espressif.com/projects/esp-idf/en/latest/esp32s2/get-started/index.html),  [ESP32-S3](https://docs.espressif.com/projects/esp-idf/en/latest/esp32s3/index.html) or [ESP32-P4](https://docs.espressif.com/projects/esp-idf/en/latest/esp32p4/index.html) SoCs.
+- ADF v3.0 documentation: Coming soon.
+- ADF v2.x documentation: Available at [docs.espressif.com](https://docs.espressif.com/projects/esp-adf/en/latest/)
 
-Click on one of the audio boards shown below to set up and use the ESP-ADF [getting-started](https://docs.espressif.com/projects/esp-adf/en/latest/get-started/index.html) guide.
+## Roadmap
 
-### Hardware
-
-Espressif Systems has released a number of boards for ESP-ADF to develop audio applications. Click the links below to learn more information on each board.
-
-It is recommended to use the ESP-ADF master branch, as it has the latest bugfixes and the new features.
-
-|                       | [ESP32-LyraT-Mini](https://docs.espressif.com/projects/esp-adf/en/latest/design-guide/dev-boards/get-started-esp32-lyrat-mini.html) |[ESP32-S3-Korvo-2](https://docs.espressif.com/projects/esp-adf/en/latest/design-guide/dev-boards/user-guide-esp32-s3-korvo-2.html)|[ESP32-C3-Lyra](https://docs.espressif.com/projects/esp-adf/en/latest/design-guide/dev-boards/user-guide-esp32-c3-lyra.html)| [ESP32-S3-Box Series](https://github.com/espressif/esp-box/tree/master)| [ESP32-P4-Function-EV-Board](https://docs.espressif.com/projects/esp-dev-kits/en/latest/esp32p4/esp32-p4-function-ev-board/index.html)|
-|:----------- | :---------------------:| :---------------------:| :---------------------:| :---------------------:| :---------------------:|
-|  |  [<img src="docs/_static/esp32-lyrat-mini-v1.2.png" width="110" alt ="ESP32-LyraT-Mini Development Board" align="center" />](https://docs.espressif.com/projects/esp-adf/en/latest/get-started/get-started-esp32-lyrat-mini.html)  |  [<img src="docs/_static/esp32-s3-korvo-2-v3.0-overview.png" width="120" alt ="ESP32-S3-Korvo-2 Development Board" align="center" />](https://docs.espressif.com/projects/esp-adf/en/latest/get-started/user-guide-esp32-s3-korvo-2.html)  |  [<img src="docs/_static/esp32-c3-lyra-v2.0-small.png" width="120" alt ="ESP32-C3-Lyra Development Board" align="center" />](https://docs.espressif.com/projects/esp-adf/en/latest/design-guide/dev-boards/user-guide-esp32-c3-lyra.html) |  [<img src="docs/_static/esp32_s3_box_3.jpg" width="100" alt ="ESP32-S3-Box Development Board" align="center" />](https://github.com/espressif/esp-box/tree/master) | [<img src="docs/_static/esp32-p4-function-ev-board.jpg" width="100" alt ="" align="center" />](https://docs.espressif.com/projects/esp-dev-kits/en/latest/esp32p4/esp32-p4-function-ev-board/index.html) |
-| ESP-ADF Master        | ![alt text](docs/_static/yes-checkm.png) | ![alt text](docs/_static/yes-checkm.png) | ![alt text](docs/_static/yes-checkm.png) | ![alt text](docs/_static/yes-checkm.png) <sup> **1** </sup> | ![alt text](docs/_static/yes-checkm.png) |
-| ESP-ADF Release/v2.7  | ![alt text](docs/_static/yes-checkm.png) | ![alt text](docs/_static/yes-checkm.png) | ![alt text](docs/_static/yes-checkm.png) | ![alt text](docs/_static/yes-checkm.png) <sup> **1** </sup> | ![alt text](docs/_static/yes-checkm.png) |
-| ESP-ADF Release/v2.6  | ![alt text](docs/_static/yes-checkm.png) | ![alt text](docs/_static/yes-checkm.png) | ![alt text](docs/_static/yes-checkm.png) | ![alt text](docs/_static/yes-checkm.png) <sup> **1** </sup> | ![alt text](docs/_static/no-icon.png) |
-
-**Note 1:** For the development board of [esp-box series](https://github.com/espressif/esp-box), only [esp32-s3-box](https://github.com/espressif/esp-box/blob/master/docs/hardware_overview/esp32_s3_box/hardware_overview_for_box.md) and [esp32-s3-box-lite](https://github.com/espressif/esp-box/blob/master/docs/hardware_overview/esp32_s3_box_lite/hardware_overview_for_lite.md) are supported in *ESP-ADF*.
-
-The following boards have reached their **end of life**.
-| [ESP32-LyraT](https://docs.espressif.com/projects/esp-adf/en/latest/design-guide/dev-boards/get-started-esp32-lyrat.html) | [ESP32-LyraTD-MSC](https://docs.espressif.com/projects/esp-adf/en/latest/design-guide/dev-boards/get-started-esp32-lyratd-msc.html) | [ESP32-Korvo-DU1906](https://docs.espressif.com/projects/esp-adf/en/latest/design-guide/dev-boards/get-started-esp32-korvo-du1906.html) | [ESP32-S2-Kaluga-1 Kit](https://docs.espressif.com/projects/esp-idf/en/latest/esp32s2/hw-reference/esp32s2/user-guide-esp32-s2-kaluga-1-kit.html)|
-|:---------------------: | :---------------------:| :---------------------:|:---------------------: |
-|  [<img src="docs/_static/esp32-lyrat-v4.2-side.jpg" width="120" alt ="ESP32-LyraT Development Board" align="center" />](https://docs.espressif.com/projects/esp-adf/en/latest/get-started/get-started-esp32-lyrat.html) |  [<img src="docs/_static/esp32-lyratd-msc-v2.2.jpg" width="120" alt ="ESP32-LyraTD-MSC Development Board" align="center" />](https://docs.espressif.com/projects/esp-adf/en/latest/get-started/get-started-esp32-lyratd-msc.html) |  [<img src="docs/_static/esp32-korvo-du1906-v1.1.png" width="110" alt ="ESP32-Korvo-DU1906 Development Board" align="center" />](https://docs.espressif.com/projects/esp-adf/en/latest/get-started/get-started-esp32-korvo-du1906.html) |  [<img src="docs/_static/esp32-s2-kaluga-1-kit.png" width="100" alt ="ESP32-LyraT-Mini Development Board" align="center" />](https://docs.espressif.com/projects/esp-idf/en/latest/esp32s2/hw-reference/esp32s2/user-guide-esp32-s2-kaluga-1-kit.html) |
-
-
-[supported]: https://img.shields.io/badge/-supported-green "supported"
-[not supported]: https://img.shields.io/badge/-not%20supported-orange "not supported"
-
-
-
-#### Examples
-
-Check folder [examples](examples) that contains sample applications to demonstrate API features of the ESP-ADF.
-
-# Resources
-
-* [Documentation](https://docs.espressif.com/projects/esp-adf/en/latest/index.html) for the latest version of https://docs.espressif.com/projects/esp-adf/. This documentation is built from the [docs directory](docs) of this repository.
-* The [esp32.com forum](https://esp32.com/) is a place to ask questions and find community resources. On the forum there is a [section dedicated to ESP-ADF](https://esp32.com/viewforum.php?f=20) users.
-* [Check the Issues section on github](https://github.com/espressif/esp-adf/issues) if you find a bug or have a feature request. Please check existing Issues before opening a new one.
-* If you're interested in contributing to ESP-ADF, please check the [Contributions Guide](https://esp-idf.readthedocs.io/en/latest/contribute/index.html).
+- [ ] Functional Modules: e.g., **Playlist**, **Board Manager**
+- [ ] Service Layer: e.g., **Wi-Fi Service** with **MCP (Model Context Protocol)** support
+- [ ] AI Service Integration: e.g., **OpenAI**, **Coze**, etc.
+- [ ] Expanded set of reusable product service plugins
