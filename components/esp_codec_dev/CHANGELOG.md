@@ -1,5 +1,11 @@
 # Changelog
 
+## v1.5.3
+
+### Bug Fixed
+
+- Fixed the ES8389 no-sound playback issue.
+
 ## v1.5.2
 
 ### Bug Fixed
