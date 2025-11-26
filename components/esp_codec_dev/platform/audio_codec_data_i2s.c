@@ -9,6 +9,7 @@
 #include "esp_codec_dev_defaults.h"
 #include "freertos/FreeRTOS.h"
 #include "esp_idf_version.h"
+#include "hal/i2s_types.h"
 #if ESP_IDF_VERSION >= ESP_IDF_VERSION_VAL(5, 0, 0)
 #include "driver/i2s_std.h"
 #include "driver/i2s_tdm.h"
@@ -38,6 +39,7 @@ typedef struct {
     esp_codec_dev_sample_info_t  in_fs;
     esp_codec_dev_sample_info_t  out_fs;
     esp_codec_dev_sample_info_t  fs;
+    i2s_clock_src_t              clk_src;
 } i2s_data_t;
 
 typedef struct i2s_data_keep_t i2s_data_keep_t;
@@ -251,6 +253,9 @@ static int set_drv_fs(i2s_chan_handle_t channel, bool playback, uint8_t slot_bit
                 slot_cfg.slot_bit_width = slot_bits;
             }
             i2s_std_clk_config_t clk_cfg = I2S_STD_CLK_DEFAULT_CONFIG(fs->sample_rate);
+            if (i2s_data_list->i2s_data->clk_src) {
+                clk_cfg.clk_src = i2s_data_list->i2s_data->clk_src;
+            }
             if (fs->mclk_multiple) {
                 clk_cfg.mclk_multiple = fs->mclk_multiple;
             }
@@ -273,6 +278,9 @@ static int set_drv_fs(i2s_chan_handle_t channel, bool playback, uint8_t slot_bit
             if (playback == false) {
 #if SOC_I2S_SUPPORTS_PDM_RX
                 i2s_pdm_rx_clk_config_t clk_cfg = I2S_PDM_RX_CLK_DEFAULT_CONFIG(fs->sample_rate);
+                if (i2s_data_list->i2s_data->clk_src) {
+                    clk_cfg.clk_src = i2s_data_list->i2s_data->clk_src;
+                }
                 i2s_pdm_rx_slot_config_t slot_cfg = I2S_PDM_RX_SLOT_DEFAULT_CONFIG(slot_bits, I2S_SLOT_MODE_STEREO);
                 i2s_pdm_slot_mask_t slot_mask = fs->channel_mask ?
                         (i2s_pdm_slot_mask_t) fs->channel_mask : I2S_PDM_SLOT_BOTH;
@@ -300,6 +308,9 @@ static int set_drv_fs(i2s_chan_handle_t channel, bool playback, uint8_t slot_bit
             } else {
 #if SOC_I2S_SUPPORTS_PDM_TX
                 i2s_pdm_tx_clk_config_t clk_cfg = I2S_PDM_TX_CLK_DEFAULT_CONFIG(fs->sample_rate);
+                if (i2s_data_list->i2s_data->clk_src) {
+                    clk_cfg.clk_src = i2s_data_list->i2s_data->clk_src;
+                }
                 clk_cfg.up_sample_fs = fs->sample_rate / 100;
                 i2s_pdm_tx_slot_config_t slot_cfg = I2S_PDM_TX_SLOT_DEFAULT_CONFIG(slot_bits, I2S_SLOT_MODE_STEREO);
                 // Stereo channel mask is ignored, need use mono instead
@@ -334,6 +345,9 @@ static int set_drv_fs(i2s_chan_handle_t channel, bool playback, uint8_t slot_bit
 #if SOC_I2S_SUPPORTS_TDM
         case I2S_COMM_MODE_TDM: {
             i2s_tdm_clk_config_t clk_cfg = I2S_TDM_CLK_DEFAULT_CONFIG(fs->sample_rate);
+            if (i2s_data_list->i2s_data->clk_src) {
+                clk_cfg.clk_src = i2s_data_list->i2s_data->clk_src;
+            }
             if (slot_bits == 24) {
                 clk_cfg.mclk_multiple = I2S_MCLK_MULTIPLE_384;
             }
@@ -468,6 +482,7 @@ static int _i2s_data_open(const audio_codec_data_if_t *h, void *data_cfg, int cf
     i2s_data->port = i2s_cfg->port;
     i2s_data->out_handle = i2s_cfg->tx_handle;
     i2s_data->in_handle = i2s_cfg->rx_handle;
+    i2s_data->clk_src = (i2s_clock_src_t) i2s_cfg->clk_src;
     add_to_keeper(i2s_data);
     return ESP_CODEC_DEV_OK;
 }

@@ -1,5 +1,15 @@
 # Changelog
 
+## v1.5.4
+
+### Feature
+
+- Added support for I2S clock source configuration, primarily for low-power applications
+
+### Bug Fixed
+
+- Fixed header dependency issue for compatibility with ESP-IDF v6.0
+
 ## v1.5.3
 
 ### Bug Fixed
