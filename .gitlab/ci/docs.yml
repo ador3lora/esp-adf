@@ -78,7 +78,7 @@
     - mkdir -p $ADF_PATH/docs/_build/${DOCLANG}/generic/inc
     - build-docs --skip-reqs-check -l $DOCLANG  -bs latex
 
-build_docs_html:
+.build_docs_html:
   extends:
     - .build_docs_html_template
     - .doc-rules:build:docs
@@ -93,7 +93,7 @@ build_docs_html:
       - DOCLANG: "en"
       - DOCLANG: "zh_CN"
 
-build_docs_pdf:
+.build_docs_pdf:
   extends:
     - .build_docs_pdf_template
     - .doc-rules:build:docs
@@ -131,7 +131,7 @@ build_docs_pdf:
     - deploy-docs
 
 # stage: test_deploy
-deploy_docs_preview:
+.deploy_docs_preview:
   extends:
     - .deploy_docs_template
   rules:
@@ -155,7 +155,7 @@ deploy_docs_preview:
     DOCS_DEPLOY_URL_BASE: "$DOCS_PREVIEW_URL_BASE"
 
 # stage: post_deploy
-deploy_docs_production:
+.deploy_docs_production:
   # The DOCS_PROD_* variables used by this job are "Protected" so these branches must all be marked "Protected" in Gitlab settings
   extends:
     - .deploy_docs_template
